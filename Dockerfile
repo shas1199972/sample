@@ -1,32 +1,27 @@
-FROM node:12.2.0
+FROM python:2.7
 
-ARG environment
+# Creating Application Source Code Directory
+RUN mkdir -p /usr/src/app
 
-RUN echo passed environment: v2
-
-#Working Directory
-RUN mkdir /usr/src/app
+# Setting Home Directory for containers
 WORKDIR /usr/src/app
 
-#add path
-ENV PATH /usr/src/app/node_modules/.bin:$PATH
+# Installing python dependencies
+COPY requirements.txt /usr/src/app/
+RUN pip install --no-cache-dir -r requirements.txt
 
-#Install app dependencies
-COPY package*.json /usr/src/app/
-
-#COPY ./node_modules/primeng/resources/themes/tcs /usr/src/app/node_modules/primeng/resources/themes/tcs
-
-RUN npm install
-RUN npm install -g @angular/cli@10.0.0
-RUN npm install @angular/cdk --save
-RUN npm install --save-dev node-sass
-
-#Bundle app resources
+# Copying src code to Container
 COPY . /usr/src/app
 
-EXPOSE 80
+# Application Environment variables
+#ENV APP_ENV development
+ENV PORT 8080
 
-USER root
-ENTRYPOINT ["npm","start"]
+# Exposing Ports
+EXPOSE $PORT
 
-#CMD ng serve --host 0.0.0.0
+# Setting Persistent data
+VOLUME ["/app-data"]
+
+# Running Python Application
+CMD gunicorn -b :$PORT -c gunicorn.conf.py main:app
